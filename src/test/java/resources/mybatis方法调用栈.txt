@@ -1,0 +1,116 @@
+<configuration>
+    <properties resource="config.properties"/>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <mapper resource="mybatis/BlogMapper.xml"/>
+    </mappers>
+</configuration>
+=========
+<properties resource="config.properties"/>
+=========
+<environments default="development">
+    <environment id="development">
+        <transactionManager type="JDBC"/>
+        <dataSource type="POOLED">
+            <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="url" value="jdbc:mysql://localhost:3306/db_bolg"/>
+            <property name="username" value="root"/>
+            <property name="password" value="yefan@813"/>
+        </dataSource>
+    </environment>
+</environments>
+=============
+<transactionManager type="JDBC"/>
+
+============
+
+<dataSource type="POOLED">
+    <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/db_bolg"/>
+    <property name="username" value="root"/>
+    <property name="password" value="yefan@813"/>
+</dataSource>
+========
+
+<mappers>
+    <mapper resource="mybatis/BlogMapper.xml"/>
+</mappers>
+
+
+======
+
+<mapper namespace="com.yefan.dao.BlogMapper">
+    <resultMap type="com.yefan.Blog" id="BaseResultMap">
+        <id jdbcType="INTEGER" column="id" property="id"/>
+        <result jdbcType="VARCHAR" column="name" property="name"/>
+        <result jdbcType="INTEGER" column="age" property="age"/>
+        <result jdbcType="VARCHAR" column="address" property="address"/>
+        <result jdbcType="VARCHAR" column="title" property="title"/>
+        <result jdbcType="TIMESTAMP" column="created" property="created"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+
+    id, `name`, age, address, title, created
+  </sql>
+</mapper>
+===
+
+
+
+
+
+
+
+
+
+一， mybatis 解析xml配置，获取数据源
+org.apache.ibatis.session.SqlSessionFactoryBuilder.build(java.io.InputStream)
+ 》org.apache.ibatis.session.SqlSessionFactoryBuilder.build(java.io.InputStream, java.lang.String, java.util.Properties) 构建XMLConfigBuilder解析myabtis-config.xml
+  》org.apache.ibatis.builder.xml.XMLConfigBuilder.parse 解析myabtis-config.xml
+   》org.apache.ibatis.builder.xml.XMLConfigBuilder.parseConfiguration
+    》org.apache.ibatis.builder.xml.XMLConfigBuilder.propertiesElement 从mybatis-config配置文件读取 properties 配置文件地址
+     》org.apache.ibatis.session.Configuration.setVariables 将 properties 设置到Configuration中
+    》org.apache.ibatis.builder.xml.XMLConfigBuilder.environmentsElement 从mybatis-config配置文件读取 enviroments 配置
+     》org.apache.ibatis.builder.xml.XMLConfigBuilder.transactionManagerElement 获取配置的事务管理配置
+      》org.apache.ibatis.builder.BaseBuilder.resolveClass
+       》org.apache.ibatis.type.TypeAliasRegistry.resolveAlias 根据transactionManager配置的 type 获取对应的事务管理器factory
+    以上是解析获取到数据源
+    》org.apache.ibatis.builder.xml.XMLConfigBuilder.dataSourceElement 获取数DataSourceFactory
+     》org.apache.ibatis.builder.BaseBuilder.resolveClass
+      》org.apache.ibatis.type.TypeAliasRegistry.resolveAlias 根据配置 DataSource 型获取DataSourceFactory
+     》org.apache.ibatis.datasource.DataSourceFactory.setProperties DataSourceFactory 设置数据源的配置 url 用户 密码等
+     》org.apache.ibatis.datasource.DataSourceFactory.getDataSource DataSourceFactory构建得到DataSource
+     》org.apache.ibatis.session.Configuration.setEnvironment 将包含DataSource的Environment设置到Configuration
+    》org.apache.ibatis.builder.xml.XMLConfigBuilder.mapperElement
+     》org.apache.ibatis.builder.xml.XMLMapperBuilder.parse
+      》org.apache.ibatis.builder.xml.XMLMapperBuilder.configurationElement 读取具体 mapper。xml文件中配置的 sql 脚本等信息
+       》org.apache.ibatis.builder.xml.XMLMapperBuilder.buildStatementFromContext(java.util.List<org.apache.ibatis.parsing.XNode>) 解具体的 statement 语句
+        》org.apache.ibatis.builder.xml.XMLStatementBuilder.parseStatementNode 解析 属性flushCache useCache parameterType 等属性配置
+         》org.apache.ibatis.builder.MapperBuilderAssistant.addMappedStatement 构建MappedStatement.Builder
+          》org.apache.ibatis.session.Configuration.addMappedStatement 加入到 configuration 中
+        到这里获取到了 mapper 中的所有脚本以及配置
+    》org.apache.ibatis.session.SqlSession.selectOne(java.lang.String, java.lang.Object) 执行查询过
+     》org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(java.lang.String, java.lang.Object)  sqlSession 执行 selectList
+      》org.apache.ibatis.session.Configuration.getMappedStatement(java.lang.String) Configuration获取 MappedStatement
+      》org.apache.ibatis.executor.Executor.query() 执行器执行查询
+       》org.apache.ibatis.executor.CachingExecutor.createCacheKey 获取 cacheKey
+       》org.apache.ibatis.executor.CachingExecutor.query 先查询缓存是否存在数据
+        》org.apache.ibatis.cache.impl.PerpetualCache.getObject
+         》org.apache.ibatis.executor.BaseExecutor.queryFromDatabase
+          》org.apache.ibatis.executor.BaseExecutor.doQuery 和 JDBC 查询一样，得到数据组装成结果
+          》org.apache.ibatis.cache.impl.PerpetualCache.putObject 放入缓存
+          到这里是执行查询的调用栈
+
+
+
+

@@ -91,16 +91,18 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public Configuration parse() {
-    if (parsed) {
+    if (parsed) { //判断是否解析过
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    //解析配置文件构建 Configuration 对象
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
     try {
+      //从 root 节点去获取对应的配置，其中 root 节点对应的是mybatis-config的root 即/configuration
       //issue #117 read properties first
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
@@ -113,6 +115,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      //从 root 节点获取 environments 配置
       environmentsElement(root.evalNode("environments"));
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       typeHandlerElement(root.evalNode("typeHandlers"));
@@ -219,16 +222,21 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private void propertiesElement(XNode context) throws Exception {
+    //判断mybatis 配置文件是否配置了properties节点
     if (context != null) {
       Properties defaults = context.getChildrenAsProperties();
+      //获取properties配置的 resource 属性
       String resource = context.getStringAttribute("resource");
+      //获取properties配置的 url 属性
       String url = context.getStringAttribute("url");
       if (resource != null && url != null) {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
       }
-      if (resource != null) {
+      if (resource != null) { // 配置 resource 优先
+        //加载配置的资源放入到Properties中
         defaults.putAll(Resources.getResourceAsProperties(resource));
       } else if (url != null) {
+        //加载配置的资源放入到Properties中
         defaults.putAll(Resources.getUrlAsProperties(url));
       }
       Properties vars = configuration.getVariables();
@@ -270,6 +278,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private void environmentsElement(XNode context) throws Exception {
+    //判断是否配置了environments
     if (context != null) {
       if (environment == null) {
         environment = context.getStringAttribute("default");
@@ -320,6 +329,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private DataSourceFactory dataSourceElement(XNode context) throws Exception {
+    //获取数据源配置
     if (context != null) {
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
@@ -360,10 +370,12 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //判断当前配置的mapper 是package还是 mapper
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
+          //当前配置的是mapper
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
